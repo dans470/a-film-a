@@ -9,6 +9,7 @@ from services.services import Schedule, Booking
 from fastapi.middleware.cors import CORSMiddleware # type: ignore
 from fastapi.responses import FileResponse # type: ignore
 import random
+import os
 
 app = FastAPI(
     title="Servicio de Cartelera",
@@ -65,9 +66,17 @@ class PayRequest(BaseModel):
     reserveId: str
     payMethod: str
 
+@app.get("/")
+def readIndex():
+    actualPath = os.path.dirname(os.path.abspath(__file__))
+    htmlPath = os.path.join(actualPath, "public", "index.html")
+    return FileResponse(htmlPath)
+
 @app.get("/movies", response_model=List[MovieResponse])
 def GetMovies():
-    # Aquí se haría la lógica para obtener las películas de la cartelera desde una API externa (TMDB)
+    #Aquí se haría la lógica para obtener las películas de la cartelera desde una API externa (TMDB)
+    #En este caso por fines de simplicidad, el get de peliculas es realizado por el front, aunque las entidades y reservas ya se hagan en
+    #los debidos endpoints de este servicio
     pass
 
 @app.get("/showtimes/{movieId}")
