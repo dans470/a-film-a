@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A-FILM-A | Reservas</title>
+    <style>
+        :root { --primary: #e50914; --bg: #141414; --text: #ffffff; --seat-free: #aaaaaa; --seat-occupied: #333333; }
+        
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; text-align: center; overflow-x: hidden; }
+        h1, h2 { font-weight: 300; letter-spacing: 2px; }
+        
+        /* Animaciones */
+        .fade-in { animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards; opacity: 0; transform: translateY(20px); }
+        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+
+        /* Contenedor de Películas */
+        .movies-container { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-bottom: 40px; }
+        .movie-card { width: 150px; cursor: pointer; border-radius: 10px; overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease; position: relative; }
+        .movie-card:hover { transform: scale(1.08); box-shadow: 0 10px 20px rgba(229, 9, 20, 0.4); }
+        .movie-card img { width: 100%; height: auto; display: block; }
+        .movie-title { background: rgba(0,0,0,0.8); position: absolute; bottom: 0; width: 100%; padding: 10px 0; font-size: 14px; margin: 0; }
+
+        /* Horarios */
+        .showtimes-menu { display: none; margin: 20px 0; }
+        .time-btn { background: #222; color: white; border: 1px solid #444; padding: 10px 20px; margin: 5px; border-radius: 5px; cursor: pointer; transition: all 0.3s; }
+        .time-btn:hover { background: var(--primary); border-color: var(--primary); }
+
+        /* Cuadrícula de Asientos (10x20) */
+        .sala-container { display: none; margin-top: 30px; }
+        .pantalla { width: 80%; max-width: 600px; height: 50px; background: linear-gradient(to bottom, rgba(255,255,255,0.2) 0%, transparent 100%); margin: 0 auto 30px auto; border-top-left-radius: 50%; border-top-right-radius: 50%; display: flex; align-items: flex-start; justify-content: center; padding-top: 10px; color: #555; letter-spacing: 5px; box-shadow: 0 -10px 20px rgba(255,255,255,0.1); }
+        
+        .seat-grid { display: grid; grid-template-columns: repeat(20, 1fr); gap: 8px; justify-content: center; max-width: 800px; margin: 0 auto; }
+        .seat { width: 100%; aspect-ratio: 1/1; fill: var(--seat-free); cursor: pointer; transition: fill 0.3s, transform 0.2s; }
+        
+        /* Estados de los asientos */
+        .seat:hover:not(.occupied) { fill: #ffffff; transform: scale(1.2); }
+        .seat.selected { fill: var(--primary); transform: scale(1.1); filter: drop-shadow(0 0 5px var(--primary)); }
+        .seat.occupied { fill: var(--seat-occupied); opacity: 0.4; cursor: not-allowed; }
+
+        /* Panel inferior */
+        .action-panel { margin-top: 30px; display: none; }
+        .btn-reserve { background: var(--primary); color: white; border: none; padding: 15px 40px; font-size: 18px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.3s, transform 0.2s; }
+        .btn-reserve:hover { background: #b20710; transform: scale(1.05); }
+        #mensaje { margin-top: 15px; font-size: 18px; }
+    </style>
+</head>
+<body>
+
+    <h1>Cartelera A-FILM-A</h1>
+    <div id="moviesContainer" class="movies-container fade-in">
+        </div>
+
+    <div id="showtimesContainer" class="showtimes-menu fade-in">
+        <h2>Selecciona un Horario</h2>
+        <div id="timesList"></div>
+    </div>
+
+    <div id="salaContainer" class="sala-container fade-in">
+        <div class="pantalla">PANTALLA</div>
+        <div id="seatGrid" class="seat-grid">
+            </div>
+        
+<div id="actionPanel" class="action-panel">
+            <p>Asientos seleccionados: <span id="selectedSeatsLabel">Ninguno</span></p>
+            
+            <button id="btnReservarInicial" class="btn-reserve" onclick="iniciarReserva()">Reservar Boletos</button>
+            
+            <div id="paymentPanel" style="display: none; margin-top: 20px; padding: 20px; background: #222; border-radius: 8px; border: 1px solid #444;">
+                <h3 style="margin-top: 0; color: #4CAF50;">Resumen de Compra</h3>
+                <p style="font-size: 18px;">Total a pagar: <b>$<span id="totalMonto">0</span>.00</b></p>
+                
+                <select id="metodoPago" style="padding: 10px; font-size: 16px; border-radius: 5px; margin-bottom: 15px; width: 80%; max-width: 300px; background: #333; color: white; border: 1px solid #555;">
+                    <option value="tarjeta">Tarjeta de Crédito/Débito</option>
+                    <option value="paypal">PayPal</option>
+                </select>
+                <br>
+                <button class="btn-reserve" style="background: #4CAF50;" onclick="procesarPago()">Confirmar Pago</button>
+            </div>
+
+            <p id="mensaje"></p>
+        </div>
+    </div>
+
+    <script>
+        const API_BACKEND = ""; 
+        const TMDB_API_KEY = "d0c59a2c5328839e75c54629e82a4694"; // <-- Pega tu llave de TMDB aquí
+        
+        let asientosSeleccionados = [];
+        let movieIdActual = null;
+        let scheduleIdActual = null;
+
+        async function cargarPeliculas() {
+            const container = document.getElementById('moviesContainer');
+            try {
+                const url = `https://api.themoviedb.org/3/movie/popular?api_key=${TMDB_API_KEY}&language=es-MX&page=1`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                const peliculas = data.results.slice(0, 5); 
+                
+                peliculas.forEach((pelicula, index) => {
+                    const posterUrl = `https://image.tmdb.org/t/p/w200${pelicula.poster_path}`;
+                    const movieHtml = `
+                        <div class="movie-card" style="animation-delay: ${index * 0.1}s" onclick="mostrarHorarios(${pelicula.id}, '${pelicula.title}')">
+                            <img src="${posterUrl}" alt="${pelicula.title}">
+                            <p class="movie-title">${pelicula.title}</p>
+                        </div>
+                    `;
+                    container.innerHTML += movieHtml;
+                });
+            } catch (error) {
+                console.error("Error con TMDB:", error);
+                container.innerHTML = "<p>Error cargando cartelera. Revisa tu API Key de TMDB.</p>";
+            }
+        }
+let dataHorariosGlobal = []; 
+
+        async function mostrarHorarios(movieId, titulo) {
+            movieIdActual = movieId;
+            const timesList = document.getElementById('timesList');
+            timesList.innerHTML = "Consultando horarios en el servidor...";
+            
+            document.getElementById('showtimesContainer').style.display = 'block';
+            document.getElementById('salaContainer').style.display = 'none'; 
+
+            try {
+                const response = await fetch(`${API_BACKEND}/showtimes/${movieId}`);
+                dataHorariosGlobal = await response.json(); // Tu backend devuelve un array de horarios
+                
+                timesList.innerHTML = "";
+
+                dataHorariosGlobal.forEach(horario => {
+                    const btn = `<button class="time-btn" onclick="dibujarSala(${horario.scheduleId})">${horario.hora}</button>`;
+                    timesList.innerHTML += btn;
+                });
+
+                window.scrollTo({ top: 300, behavior: 'smooth' });
+            } catch (error) {
+                timesList.innerHTML = "Error al conectar con FastAPI.";
+            }
+        }
+
+        function dibujarSala(scheduleId) {
+            scheduleIdActual = scheduleId;
+            asientosSeleccionados = []; 
+            actualizarLabel();
+            
+            const horarioData = dataHorariosGlobal.find(h => h.scheduleId === scheduleId);
+            const ocupadosBackend = horarioData.estado_asientos.ocupados;
+
+            const grid = document.getElementById('seatGrid');
+            grid.innerHTML = "";
+            const filas = ['A','B','C','D','E','F','G','H','I','J'];
+            const seatSvg = `<svg viewBox="0 0 24 24"><path d="M4 18v3h3v-3h10v3h3v-6H4zm15-8h3v3h-3zM2 10h3v3H2zm15 3H7V5c0-1.1.9-2 2-2h6c1.1 0 2 .9 2 2v8z"/></svg>`;
+
+            for(let i=0; i < filas.length; i++){
+                for(let j=1; j<=20; j++){
+                    const asientoId = `${filas[i]}${j}`;
+                    const isOcupado = ocupadosBackend.includes(asientoId); 
+                    const clase = isOcupado ? "seat occupied" : "seat";
+                    
+                    grid.innerHTML += `
+                        <div id="seat-${asientoId}" class="${clase}" onclick="toggleAsiento('${asientoId}', ${isOcupado})" title="Butaca ${asientoId}">
+                            ${seatSvg}
+                        </div>
+                    `;
+                }
+            }
+
+            document.getElementById('salaContainer').style.display = 'block';
+            document.getElementById('actionPanel').style.display = 'block';
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }
+
+        function toggleAsiento(asientoId, isOcupado) {
+            if(isOcupado) return; 
+
+            const elemento = document.getElementById(`seat-${asientoId}`);
+            
+            if(asientosSeleccionados.includes(asientoId)) {
+                asientosSeleccionados = asientosSeleccionados.filter(id => id !== asientoId);
+                elemento.classList.remove("selected");
+            } else {
+                asientosSeleccionados.push(asientoId);
+                elemento.classList.add("selected");
+            }
+            actualizarLabel();
+        }
+
+        function actualizarLabel() {
+            const label = document.getElementById('selectedSeatsLabel');
+            label.innerText = asientosSeleccionados.length > 0 ? asientosSeleccionados.join(", ") : "Ninguno";
+        }
+
+        let reservaActualId = null;
+
+        // FASE 1: Bloqueo de asientos (El backend los aparta temporalmente)
+        async function iniciarReserva() {
+            const mensajeEl = document.getElementById('mensaje');
+            
+            if(asientosSeleccionados.length === 0) {
+                mensajeEl.innerText = "Selecciona al menos un asiento.";
+                mensajeEl.style.color = "yellow";
+                return;
+            }
+
+            mensajeEl.innerText = "⏳ Apartando butacas...";
+            mensajeEl.style.color = "white";
+
+            try {
+                const response = await fetch(`${API_BACKEND}/bookings/reserve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        scheduleId: scheduleIdActual,
+                        usuarioId: 1, 
+                        seats: asientosSeleccionados
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Guardamos el ID de la reserva para usarlo en el pago
+                    reservaActualId = data.reserveId; 
+                    
+                    mensajeEl.innerText = "Butacas apartadas. Procede al pago para finalizar.";
+                    mensajeEl.style.color = "white";
+                    
+                    // Ocultar botón inicial y mostrar el menú de pago
+                    document.getElementById('btnReservarInicial').style.display = 'none';
+                    document.getElementById('paymentPanel').style.display = 'block';
+                    
+                    // Calculamos el total ($10 por asiento)
+                    const total = asientosSeleccionados.length * 10;
+                    document.getElementById('totalMonto').innerText = total;
+
+                } else {
+                    mensajeEl.innerText = `Error: ${data.detail || 'Alguien te ganó el asiento'}`;
+                    mensajeEl.style.color = "#F44336";
+                }
+            } catch (error) {
+                mensajeEl.innerText = "Falló la conexión con la API de Python.";
+                mensajeEl.style.color = "#F44336";
+            }
+        }
+
+        async function procesarPago() {
+            const mensajeEl = document.getElementById('mensaje');
+            const metodoElegido = document.getElementById('metodoPago').value;
+            
+            mensajeEl.innerText = `Procesando pago con ${metodoElegido}...`;
+            mensajeEl.style.color = "white";
+
+            try {
+                const response = await fetch(`${API_BACKEND}/bookings/pay`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        reserveId: reservaActualId,
+                        payMethod: metodoElegido
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    mensajeEl.innerText = `Pago completado. Reserva: ${reservaActualId}`;
+                    mensajeEl.style.color = "#4CAF50";
+                    
+                    document.getElementById('paymentPanel').style.display = 'none';
+                    document.getElementById('btnReservarInicial').style.display = 'inline-block';
+                    
+                    asientosSeleccionados.forEach(id => {
+                        const el = document.getElementById(`seat-${id}`);
+                        el.classList.remove("selected");
+                        el.classList.add("occupied");
+                        el.replaceWith(el.cloneNode(true));
+                    });
+                    
+                    asientosSeleccionados = [];
+                    actualizarLabel();
+                } else {
+                    mensajeEl.innerText = `Error en el pago: ${data.detail}`;
+                    mensajeEl.style.color = "#F44336";
+                }
+            } catch (error) {
+                mensajeEl.innerText = "Falló la conexión al procesar el pago.";
+                mensajeEl.style.color = "#F44336";
+            }
+        }
+
+        cargarPeliculas();
+    </script>
+</body>
+</html>
