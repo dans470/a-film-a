@@ -147,7 +147,7 @@ let dataHorariosGlobal = [];
             actualizarLabel();
             
             const horarioData = dataHorariosGlobal.find(h => h.scheduleId === scheduleId);
-            const ocupadosBackend = horarioData.estado_asientos.ocupados;
+            const ocupadosBackend = horarioData.seatStatus.ocupados;
 
             const grid = document.getElementById('seatGrid');
             grid.innerHTML = "";
@@ -195,7 +195,6 @@ let dataHorariosGlobal = [];
 
         let reservaActualId = null;
 
-        // FASE 1: Bloqueo de asientos (El backend los aparta temporalmente)
         async function iniciarReserva() {
             const mensajeEl = document.getElementById('mensaje');
             
@@ -222,17 +221,14 @@ let dataHorariosGlobal = [];
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Guardamos el ID de la reserva para usarlo en el pago
                     reservaActualId = data.reserveId; 
                     
                     mensajeEl.innerText = "Butacas apartadas. Procede al pago para finalizar.";
                     mensajeEl.style.color = "white";
                     
-                    // Ocultar botón inicial y mostrar el menú de pago
                     document.getElementById('btnReservarInicial').style.display = 'none';
                     document.getElementById('paymentPanel').style.display = 'block';
                     
-                    // Calculamos el total ($10 por asiento)
                     const total = asientosSeleccionados.length * 10;
                     document.getElementById('totalMonto').innerText = total;
 
