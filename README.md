@@ -6,8 +6,11 @@ El diagrama de clases está estructurado de la siguiente manera con las entidade
 
 ## DIAGRAMA DE CLASES
 
-> **[ AQUÍ VA EL DIAGRAMA UML - INSERTA TU IMAGEN O CÓDIGO AQUÍ ]**
+![Diagrama de Clases](resources/DiagramaClases.png)
 
+## DIAGRAMA DE SECUENCIAS
+
+![Diagrama de Secuencias](resources/DiagramaSecuencias.png)
 ---
 
 La construcción de este servicio se desarrolló la mayor parte en Python con la librería de fastAPI que genera el yml automáticamente en cuanto se crean los endpoints de cartelera.
@@ -38,6 +41,9 @@ peliculas/
 ├── payment/
 │   ├── __init__.py
 │   └── payment.py
+├── resources/
+│   ├── DiagramaClases.png
+│   └── DiagramaSecuencias.png
 ├── services/
 │   ├── __init__.py
 │   └── services.py
