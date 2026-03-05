@@ -2,6 +2,24 @@ import threading
 from typing import List, Dict, Optional
 import uuid
 
+class Usuario:
+    def __init__(self, userId: int, name: str, email: str):
+        self.userId = userId
+        self.name = name
+        self.email = email
+
+class Pelicula:
+    def __init__(self, movieId: int, title: str, movieDuration: int):
+        self.movieId = movieId
+        self.title = title
+        self.duracion_minutos = movieDuration
+
+class Room:
+    def __init__(self, roomId: int, name: str, totalSeats: int):
+        self.roomId = roomId
+        self.name = name
+        self.totalSeats = totalSeats
+
 class Seat:
     def __init__(self, seatId: str):
         self.seatId = seatId
