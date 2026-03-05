@@ -2,13 +2,13 @@ import threading
 from typing import List, Dict, Optional
 import uuid
 
-class Usuario:
+class User:
     def __init__(self, userId: int, name: str, email: str):
         self.userId = userId
         self.name = name
         self.email = email
 
-class Pelicula:
+class Movie:
     def __init__(self, movieId: int, title: str, movieDuration: int):
         self.movieId = movieId
         self.title = title
