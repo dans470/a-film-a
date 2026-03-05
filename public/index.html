@@ -10,35 +10,29 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; text-align: center; overflow-x: hidden; }
         h1, h2 { font-weight: 300; letter-spacing: 2px; }
         
-        /* Animaciones */
         .fade-in { animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards; opacity: 0; transform: translateY(20px); }
         @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
 
-        /* Contenedor de Películas */
         .movies-container { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-bottom: 40px; }
         .movie-card { width: 150px; cursor: pointer; border-radius: 10px; overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease; position: relative; }
         .movie-card:hover { transform: scale(1.08); box-shadow: 0 10px 20px rgba(229, 9, 20, 0.4); }
         .movie-card img { width: 100%; height: auto; display: block; }
         .movie-title { background: rgba(0,0,0,0.8); position: absolute; bottom: 0; width: 100%; padding: 10px 0; font-size: 14px; margin: 0; }
 
-        /* Horarios */
         .showtimes-menu { display: none; margin: 20px 0; }
         .time-btn { background: #222; color: white; border: 1px solid #444; padding: 10px 20px; margin: 5px; border-radius: 5px; cursor: pointer; transition: all 0.3s; }
         .time-btn:hover { background: var(--primary); border-color: var(--primary); }
 
-        /* Cuadrícula de Asientos (10x20) */
         .sala-container { display: none; margin-top: 30px; }
         .pantalla { width: 80%; max-width: 600px; height: 50px; background: linear-gradient(to bottom, rgba(255,255,255,0.2) 0%, transparent 100%); margin: 0 auto 30px auto; border-top-left-radius: 50%; border-top-right-radius: 50%; display: flex; align-items: flex-start; justify-content: center; padding-top: 10px; color: #555; letter-spacing: 5px; box-shadow: 0 -10px 20px rgba(255,255,255,0.1); }
         
         .seat-grid { display: grid; grid-template-columns: repeat(20, 1fr); gap: 8px; justify-content: center; max-width: 800px; margin: 0 auto; }
         .seat { width: 100%; aspect-ratio: 1/1; fill: var(--seat-free); cursor: pointer; transition: fill 0.3s, transform 0.2s; }
         
-        /* Estados de los asientos */
         .seat:hover:not(.occupied) { fill: #ffffff; transform: scale(1.2); }
         .seat.selected { fill: var(--primary); transform: scale(1.1); filter: drop-shadow(0 0 5px var(--primary)); }
         .seat.occupied { fill: var(--seat-occupied); opacity: 0.4; cursor: not-allowed; }
 
-        /* Panel inferior */
         .action-panel { margin-top: 30px; display: none; }
         .btn-reserve { background: var(--primary); color: white; border: none; padding: 15px 40px; font-size: 18px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.3s, transform 0.2s; }
         .btn-reserve:hover { background: #b20710; transform: scale(1.05); }
@@ -47,12 +41,12 @@
 </head>
 <body>
 
-    <h1>Cartelera A-FILM-A</h1>
+    <h1>Cartelera A-FILM-A CINEMA</h1>
     <div id="moviesContainer" class="movies-container fade-in">
         </div>
 
     <div id="showtimesContainer" class="showtimes-menu fade-in">
-        <h2>Selecciona un Horario</h2>
+        <h2>Selecciona una función</h2>
         <div id="timesList"></div>
     </div>
 
