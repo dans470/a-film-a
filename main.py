@@ -319,7 +319,51 @@ def BuyTickets(request: BookingRequest):
     }    
 
 
-@app.post("/bookings/pay")
+@app.post("/bookings/pay",
+    responses={
+        201: {
+            "description": "Pago procesado exitosamente",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "reserveId": "123e4567-e89b-12d3-a456-426614174000",
+                        "status": "PAGADO",
+                        "message": "Pago exitoso"
+                    }
+                }
+            }
+        },
+        400: {
+            "description": "Solicitud incorrecta",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "ID de reserva no válido o método de pago no soportado"
+                    }
+                }
+            }
+        },
+        409: {
+            "description": "Conflicto en la solicitud",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "La reserva ya ha sido pagada"
+                    }
+                }
+            }
+        },
+        500: {
+            "description": "Error interno del servidor",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "Error al procesar el pago"
+                    }
+                }
+            }
+        }
+    })
 def PayBooking(request: PayRequest):
     reserve = db["bookings"].get(request.reserveId)
     if not reserve:
